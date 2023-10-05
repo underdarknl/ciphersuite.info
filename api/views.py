@@ -37,7 +37,21 @@ def cs_all(request):
 
 def cs_single(request, iana_name):
     cs = get_object_or_404(CipherSuite, pk=iana_name)
-    return JsonResponse(reformat_cs(cs.to_dict()), safe=False)
+    related_tech = [
+        cs.protocol_version,
+        cs.kex_algorithm,
+        cs.auth_algorithm,
+        cs.enc_algorithm,
+        cs.hash_algorithm,
+    ]
+    issues = []
+    for algo in related_tech:
+        for issue in algo.vulnerabilities:
+            issues.append(issue)
+    cs_dict = reformat_cs(cs.to_dict())
+    if issues:
+        cs_dict['issues'] = issues
+    return JsonResponse(cs_dict, safe=False)
 
 
 def cs_by_security(request, sec_level):
